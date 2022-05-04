@@ -4,9 +4,7 @@ import com.revature.dao.DaoInterface;
 import com.revature.models.Account;
 import com.revature.models.Transactions;
 
-import java.sql.Date;
-import java.sql.SQLDataException;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Random;
@@ -75,9 +73,20 @@ public class Operations implements OperationInterface {
         }
     }
 
-    public boolean deleteAccount(double accountId) throws SQLException {
+    public boolean deleteAccount(int accountId) throws SQLException, RuntimeException {
         DaoInterface di = new AccountDao();
 
+        try {
+            di.deleteTransaction(accountId);    //Remove foreign key constraints
+            di.deleteAccountDb(accountId);
+
+        } catch (SQLException e) {
+            throw new SQLException();
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException();
+
+        }
         
 
         return false;
@@ -146,9 +155,14 @@ public class Operations implements OperationInterface {
     /*generates a random 6 digit unique number and set it as the account number*/
     public void createAccount (Account nAccount) {
         nAccount.setAccountId( randNumGen(1, "BankAccounts") );
-
         DaoInterface di = new AccountDao();
-        di.CreateUserAccount(nAccount);
+
+        /*Determine which database (Pending or BankAccounts) to create the new entry in*/
+        if(nAccount.getAccountType().equals("Manager")) {
+            di.CreateUserAccount(nAccount, "BankAccounts");
+        } else {
+            di.CreateUserAccount(nAccount, "pending");
+        }
     }
 
     public String loginUser(String email, String password) throws SQLException, SQLDataException {
@@ -163,6 +177,20 @@ public class Operations implements OperationInterface {
         } catch (SQLException e) {
             throw new SQLException();
         }
+    }
+
+    public void approveAccount(int accountId) throws SQLDataException{
+
+        DaoInterface di = new AccountDao();
+
+        Account crAccount = di.approveAccountDb(accountId);
+
+        if (crAccount.getEmail() != null) {
+            di.CreateUserAccount(crAccount, "BankAccounts"); //Create an entry for BankAccounts Database
+        } else {
+            throw new SQLDataException();
+        }
+
     }
 
 

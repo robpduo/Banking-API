@@ -1,6 +1,8 @@
 package com.revature.services;
 import com.revature.models.Account;
 
+import java.sql.SQLClientInfoException;
+import java.sql.SQLData;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.List;
@@ -29,10 +31,12 @@ public interface OperationInterface {
     /*login the user*/
     public String loginUser(String email, String password) throws SQLException, SQLDataException;
 
-    public boolean deleteAccount(double accountId) throws SQLException;
+    public boolean deleteAccount(int accountId) throws SQLException;
 
     /*Returns true if there is a manager account associated with the email*/
     public boolean verifyManagerStatus (String email) throws SQLException;
 
     public String displayAll (String request) throws SQLException;
+
+    public void approveAccount(int accountId) throws SQLDataException;
 }

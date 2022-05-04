@@ -24,14 +24,16 @@ public class BankingDriver {
                 post("/register", ac.handleCreator);
                 post("/login", ac.loginHandler);
                 post("/withdraw", ac.withdrawHandler);
-                post("/logout", ac.logoutHandler);
+                get("/logout", ac.logoutHandler);
                 post("/deposit", ac.depositHandler);
                 post("/transfer", ac.transferHandler);
             });
 
             path("manager", () -> {
-                post("/display", ac.displayAllHandler);
+                get("/display", ac.displayAllHandler);
                 post("/delete", ac.deleteAccountsHandler);
+                post("/approve", ac.approveHandler);
+                get("/pending", ac.pendingHandler);
             });
         });
 

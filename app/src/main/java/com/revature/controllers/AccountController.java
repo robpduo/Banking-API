@@ -8,6 +8,8 @@ import com.revature.models.LoginHelper;
 import com.revature.models.TransferHelper;
 import io.javalin.http.Handler;
 
+import java.sql.SQLClientInfoException;
+import java.sql.SQLData;
 import java.sql.SQLDataException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -71,25 +73,28 @@ public class AccountController {
     };
 
     public Handler deleteAccountsHandler = ctx -> {
-        List<TransferHelper> deleteList = new ArrayList<>();
-
         /*is the current user that is logged in a manager?*/
-        if (opi.verifyManagerStatus(ctx.req.getSession().getAttribute("LoggedIn").toString())) {
+        try {
+            if (opi.verifyManagerStatus(ctx.req.getSession().getAttribute("LoggedIn").toString())) {
 
+                TransferHelper userAccount = om.readValue(ctx.body(), TransferHelper.class);
 
-            TransferHelper userAccount = om.readValue(ctx.body(), TransferHelper.class);
-            deleteList.add(userAccount);
+                opi.deleteAccount(userAccount.delete);
 
+                ctx.result("Account and User Have been Deleted");
+                ctx.status(200);
 
-            System.out.println(deleteList.get(0).toString());
+            } else {
+                ctx.result("Please Login to a Managers Account to Access this Function");
+                ctx.status(200);
 
-            ctx.result("Accounts Have been Deleted");
-            ctx.status(200);
-
-        } else {
-            ctx.result("Please Login to a Managers Account to Access this Function");
+            }
+        } catch (NullPointerException e) {
+            ctx.result("Please Log in to use this function");
             ctx.status(401);
-
+        } catch (SQLException e) {
+            ctx.result("Account is no longer in the system");
+            ctx.status(200);
         }
     };
 
@@ -121,6 +126,9 @@ public class AccountController {
         } catch (RuntimeException e) {
             ctx.status(404);
             ctx.result("Unable to Retrieve Account Info, Check Account Entry");
+        } catch (SQLException e) {
+            ctx.status(406);
+            ctx.result("Invalid Entry, Please Enter an Amount > $0");
         }
     };
 
@@ -164,7 +172,7 @@ public class AccountController {
 
         try {
             ctx.req.getSession().removeAttribute("LoggedIn");
-            ctx.result("You have logged out, Thank you for banking a Revature Training Co.");
+            ctx.result("You have logged out, Thank you for banking with Revature Training Co.");
             ctx.status(200);
 
         } catch (NullPointerException e) {
@@ -187,7 +195,7 @@ public class AccountController {
 
                     ctx.result("Transfer Successful, New Balance for "+ th.sender + " is: " + nBalance);
                     opi.updateTransaction(th.amount, th.sender, th.recipient, "Transfer");
-                    ctx.status(201);
+                    ctx.status(200);
 
                 } else {
                     ctx.result("Recipient Account Not Found");
@@ -209,12 +217,39 @@ public class AccountController {
         } catch (SQLException e) {
             nBalance = opi.getBalance(th.sender);
             ctx.result("Insufficient Funds In Account Number: " + th.sender + ", Balance: " + nBalance);
-            ctx.status(401);
+            ctx.status(406);
         }
     };
 
-    public Handler approveAccounts = ctx -> {
+    public Handler approveHandler = ctx -> {
+        TransferHelper th = om.readValue(ctx.body(), TransferHelper.class);
 
+        try {
+            ctx.req.getSession().getAttribute("LoggedIn"); // Test to see if you're logged in
+
+            if (opi.verifyManagerStatus(ctx.req.getSession().getAttribute("LoggedIn").toString())) {
+
+                opi.approveAccount(th.approve);
+
+
+                ctx.result(th.approve + " Has Been Approved");
+                ctx.status(200);
+            } else {
+                ctx.result("This Account Cannot Does Not Have Access To This Function");
+                ctx.status(403);
+            }
+
+        } catch (NullPointerException e) {
+            ctx.result("Please Log in to Use This Function");
+            ctx.status(401);
+
+        } catch (SQLClientInfoException e) {
+            e.printStackTrace();
+
+        } catch (SQLDataException e) {
+            ctx.result("Account Does Not Exist");
+            ctx.status(404);
+        }
     };
 
     public Handler displayAllHandler = ctx -> {
@@ -228,7 +263,7 @@ public class AccountController {
 
             } else {
                 ctx.result("This Account Cannot Does Not Have Access To This Function");
-                ctx.status(401);
+                ctx.status(403);
             }
 
         }   catch (SQLException e) {
@@ -237,6 +272,28 @@ public class AccountController {
         } catch (NullPointerException e) {
             ctx.result("Please Login to a Managers Account to Access this Function");
             ctx.status(401);
+        }
+    };
+
+    public Handler pendingHandler = ctx -> {
+        try {
+            if (opi.verifyManagerStatus(ctx.req.getSession().getAttribute("LoggedIn").toString())) {
+                String allAccounts = opi.displayAll("pending");
+
+                ctx.result(allAccounts);
+                ctx.status(200);
+            } else {
+                ctx.result("This Account Cannot Does Not Have Access To This Function");
+                ctx.status(403);
+            }
+        } catch (SQLException e) {
+            ctx.result("Please Login to a Managers Account to Access this Function");
+            ctx.status(402);
+
+        } catch (NullPointerException e ) {
+            ctx.result("Please Login to a Managers Account to Access this Function");
+            ctx.status(401);
+
         }
     };
 
