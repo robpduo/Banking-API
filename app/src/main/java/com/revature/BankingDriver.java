@@ -22,7 +22,7 @@ public class BankingDriver {
         server.routes( () -> {
             path("users", () -> {
                 post("/register", ac.handleCreator);
-                post("/login", ac.loginHandler);
+                get("/login", ac.loginHandler);
                 post("/withdraw", ac.withdrawHandler);
                 get("/logout", ac.logoutHandler);
                 post("/deposit", ac.depositHandler);
@@ -31,9 +31,10 @@ public class BankingDriver {
 
             path("manager", () -> {
                 get("/display", ac.displayAllHandler);
-                post("/delete", ac.deleteAccountsHandler);
+                delete("/delete", ac.deleteAccountsHandler);
                 post("/approve", ac.approveHandler);
                 get("/pending", ac.pendingHandler);
+                get("/transactions", ac.displayTransactionHandler);
             });
         });
 

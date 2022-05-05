@@ -12,6 +12,8 @@ public interface OperationInterface {
     /*Verify that the user is trying to withdraw from their own account*/
     public boolean verifyAccountWithSession (double accountId, String email);
 
+    public String listTransactions();
+
     /*updates balances in an account*/
     public double deposit(double depositAmt, int accountId) throws SQLException;
 

@@ -98,6 +98,25 @@ public class AccountController {
         }
     };
 
+    public Handler displayTransactionHandler = ctx -> {
+        try {
+            //Verify Manager status
+            if (opi.verifyManagerStatus(ctx.req.getSession().getAttribute("LoggedIn").toString())) {
+                String allTransactions = opi.listTransactions();
+
+                ctx.result(allTransactions);
+                ctx.status(200);
+            } else {
+                throw new NullPointerException();
+            }
+
+        } catch (NullPointerException e){
+
+            ctx.status(401);
+            ctx.result("Please Log a Managers Account");
+        }
+    };
+
     public Handler depositHandler = ctx -> {
         TransferHelper th = om.readValue(ctx.body(), TransferHelper.class);
         double nBalance = 0;
@@ -113,7 +132,9 @@ public class AccountController {
 
                 ctx.status(200);
                 ctx.result("Deposit Successful, New Balance: $" + nBalance);
+                System.out.println("x1");
                 opi.updateTransaction(th.amount, th.recipient, th.recipient, "Deposit");
+
             } else {
                 ctx.status(401);
                 ctx.result("Error Verifying Account ID with Email, unable to Deposit");
@@ -216,7 +237,7 @@ public class AccountController {
 
         } catch (SQLException e) {
             nBalance = opi.getBalance(th.sender);
-            ctx.result("Insufficient Funds In Account Number: " + th.sender + ", Balance: " + nBalance);
+            ctx.result("Invalid Entry for Account: " + th.sender + ", Balance: " + nBalance);
             ctx.status(406);
         }
     };

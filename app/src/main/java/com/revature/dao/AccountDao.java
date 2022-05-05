@@ -46,7 +46,7 @@ public class AccountDao implements DaoInterface {
         }
     }
 
-    /*Inserts a nnew entry into the transaction database*/
+    /*Inserts a new entry into the transaction database*/
     public void updateTransactionDB (Transactions addTransaction) throws SQLException {
         Connection c = cs.getConnection();
         String sql = "INSERT INTO transactions (account_id, transaction_id, transaction_type, recipient_id, transac_amt, cur_date) " +
@@ -82,8 +82,12 @@ public class AccountDao implements DaoInterface {
             ResultSet rs = s.getResultSet();
 
             while (rs.next()) { //Loops through all accounts in the database and compare account_id with checkvalue
-                if (rs.getString(columnIndex).equals(checkValue)) {
-                    return true;
+                if (rs.getString(columnIndex) == null && table.equals("transactions")) { //null value found on transaction ID
+                    if(rs.getString(7).equals(checkValue)) {
+                        return true;    //same accountId found but it is inactive
+                    }
+                } else if (rs.getString(columnIndex).equals(checkValue)) {
+                    return true;    //same active accountId found
                 }
             }
 
@@ -175,11 +179,11 @@ public class AccountDao implements DaoInterface {
 
     public void deleteTransaction (int accountId) {
         Connection c = cs.getConnection();
-        String delTransSql = "DELETE FROM transactions where account_id = " + accountId + ";";
+        String nullTransSql = "update transactions set account_id = null, inactive = " + accountId + " where account_id = " + accountId + ";";
 
         try {
             Statement s = c.createStatement();
-            s.execute(delTransSql);
+            s.execute(nullTransSql);
         } catch (SQLException e) {
             // do nothing with this exception -- this method is just to remove foreign key constraints if there are any
         }
@@ -253,26 +257,64 @@ public class AccountDao implements DaoInterface {
 
         accountBalance = getBalance(accountId);
 
-        if (accountBalance >= amt && amt > 0) {
-            accountBalance -= amt;  //new account balance
-            String sqlUpdate = "UPDATE BankAccounts SET balance = " + accountBalance + " WHERE account_id = " + accountId + ";";
+        try {
+            if (accountBalance >= amt && amt > 0) {
+                accountBalance -= amt;  //new account balance
+                String sqlUpdate = "UPDATE BankAccounts SET balance = " + accountBalance + " WHERE account_id = " + accountId + ";";
 
-            Statement s = c.createStatement();
-            s.execute(sql);
+                Statement s = c.createStatement();
+                s.execute(sql);
 
-            ResultSet rs = s.getResultSet();
-            while (rs.next()) {
-                if (rs.getDouble(1) == accountId) {
-                    Statement s2 = c.createStatement();
-                    s2.execute(sqlUpdate);
+                ResultSet rs = s.getResultSet();
+                while (rs.next()) {
+                    if (rs.getDouble(1) == accountId) {
+                        Statement s2 = c.createStatement();
+                        s2.execute(sqlUpdate);
+                    }
                 }
-            }
 
-        } else {
+            } else {
+                throw new SQLException();
+            }
+        } catch (SQLException e ) {
             throw new SQLException();
         }
     }
 
+    public String displayTransactions () {
+        StringBuilder allTransactions = new StringBuilder();
+
+        Connection c = cs.getConnection();
+        String sqlTrans = "SELECT * FROM transactions;";
+
+        try {
+            Statement s = c.createStatement();
+            s.execute(sqlTrans);
+            ResultSet rs = s.getResultSet();
+
+            while(rs.next()) {
+                allTransactions.append(("{---------------------------------\n"));
+
+                if (rs.getInt(1) < 1) {
+                    allTransactions.append(("Inactive: " + rs.getInt(7)) + "\n");
+                } else {
+                    allTransactions.append("Account Id: " + rs.getInt(1) + "\n");
+                }
+
+                allTransactions.append("Transaction Type: " + rs.getString(3) + "\n");
+                allTransactions.append("Recipient ID: " + rs.getInt(4) + "\n");
+                allTransactions.append("Transaction AMT: " + rs.getDouble(5) + "\n");
+                allTransactions.append("Transaction Date: " + rs.getDate(6) + "\n");
+                allTransactions.append("---------------------------------}\n\n");
+
+
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return allTransactions.toString();
+    }
     /*displays all the accounts in the database*/
     public String displayAll (String requestType) throws SQLException {
         StringBuilder allAccounts = new StringBuilder();

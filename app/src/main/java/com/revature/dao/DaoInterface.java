@@ -23,12 +23,13 @@ public interface DaoInterface {
 
     /*Display*/
     public String displayAll (String requestType) throws SQLException;
-
+    public String displayTransactions ();
 
     /*retrieve account balance given account ID*/
     public double getBalance (double accountID);
 
     public boolean isManager(String email) throws SQLException;
+
 
     /*----------------------------DELETE----------------------------*/
     public void deleteTransaction (int accountId);

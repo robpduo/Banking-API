@@ -51,7 +51,9 @@ public class Operations implements OperationInterface {
         //Update Transaction
         try {
             //new transaction entry: nTransaction
+            System.out.println("x2");
             Transactions nTransaction = new Transactions(randNumGen(1, "transactions"), type, recipient, sender, amt, curDate);
+            System.out.println("x3");
             di.updateTransactionDB(nTransaction);
 
         } catch (SQLException e) {
@@ -115,7 +117,7 @@ public class Operations implements OperationInterface {
         DaoInterface di = new AccountDao();
         Random randomGen = new Random();
         int rand;
-
+        System.out.println("x4");
         do {
             rand = ThreadLocalRandom.current().nextInt(100000, 999999);
         } while (di.checkDatabase("" + rand, column, table));
@@ -150,6 +152,12 @@ public class Operations implements OperationInterface {
         } catch (SQLException e) {
             throw new SQLException();
         }
+    }
+
+    public String listTransactions () {
+        DaoInterface di = new AccountDao();
+
+            return di.displayTransactions();
     }
 
     /*generates a random 6 digit unique number and set it as the account number*/
